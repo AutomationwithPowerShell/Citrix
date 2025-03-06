@@ -140,14 +140,6 @@ $CTXLicHeaderNames = "LicenseName", 	"Count","InUse", 	"Available"
 $CTXLicHeaderWidths = "4",	"2", 	"2", 					"2"
 $CTXLicTableWidth= 1200
  
-<# 
-#Header for Table "MachineCatalogs" Get-BrokerCatalog
-$CatalogHeaderName = "CatalogName"
-$CatalogHeaderNames = 	"AssignedToUser", 	"AssignedToDG", "NotToUserAssigned","ProvisioningType", "AllocationType", "MinimumFunctionalLevel"
-$CatalogWidths = 		"4",				"8", 			"8", 				"8", 				"8", 				"4"
-$CatalogTablewidth = 1200
- #>
-
 #Header for Table "DeliveryGroups" Get-BrokerDesktopGroup
 $AssigmentFirstheaderName = "DeliveryGroup"
 $vAssigmentHeaderNames = 	"PublishedName","TotalMachines", "DesktopsInUse","DesktopsFree","DesktopsUnregistered","DesktopKind" #, "SessionSupport" #,"MaintenanceMode" , "MaintenanceMode" , "ShutdownAfterUse",  "MinimumFunctionalLevel",,"DesktopsAvailable"
@@ -428,32 +420,6 @@ Function ToHumanReadable()
 }
 
 # ==============================================================================================
-<#
-	.SYNOPSIS
-		Get information about user that set maintenance mode.
-	
-	.DESCRIPTION
-		Over the Citrix XenDeesktop or XenApp log database, you can finde the user that
-		set the maintenance mode of an worker.
-		This is version 1.0.
-	
-	.PARAMETER AdminAddress
-		Specifies the address of the Delivery Controller to which the PowerShell module will connect. This can be provided as a host name or an IP address.
-	
-	.PARAMETER Credential
-		Specifies a user account that has permission to perform this action. The default is the current user.
-	
-	.EXAMPLE
-		Get-CitrixMaintenanceInfo
-		Get the informations on an delivery controller with nedded credentials.
-	
-	.EXAMPLE
-		Get-CitrixMaintenanceInfo -AdminAddress server.domain.tld -Credential (Get-Credential)
-		Use sever.domain.tld to get the log informations and use credentials.
-
-	.LINK
-		http://www.beckmann.ch/blog/2016/11/01/get-user-who-set-maintenance-mode-for-a-server-or-client/
-#>
 function Get-CitrixMaintenanceInfo {
 	[CmdletBinding()]
 	[OutputType([System.Management.Automation.PSCustomObject])]
@@ -592,13 +558,7 @@ else { $tests.State = "SUCCESS", $ControllerState }
 $ControllerDesktopsRegistered = $Controller | %{ $_.DesktopsRegistered }
 "Registered: $ControllerDesktopsRegistered" | LogMe -display -progress
 $tests.DesktopsRegistered = "NEUTRAL", $ControllerDesktopsRegistered
-<#  
-#ActiveSiteServices on this controller
-$ActiveSiteServices = $Controllers | %{ $_.ActiveSiteServices }
-"ActiveSiteServices $ActiveSiteServices" | LogMe -display -progress
-$tests.ActiveSiteServices = "NEUTRAL", $ActiveSiteServices
 
-#>
 # Get all services
 $ActiveSiteServices=Invoke-Command -ComputerName $Controller.DNSName -ScriptBlock{Get-Service |?{($_.Name -like 'Citrix*') -and ($_.StartType -eq "Automatic") -and($_.Status -ne "Running")}}
 
@@ -689,62 +649,6 @@ else {
 $ControllerResults.$ControllerDNS = $tests
 }
  
-<#  
-#== Catalog Check ============================================================================================
-"Check Catalog #################################################################################" | LogMe -display -progress
-" " | LogMe -display -progress
-  
-$CatalogResults = @{}
-$Catalogs = Get-BrokerCatalog  -AdminAddress $AdminAddress  | ?{($_.UsedCount -gt 0) -and ($_.Name -imatch "machinename*")}  
-  
-foreach ($Catalog in $Catalogs) {
-  $tests = @{}
-  
-  #Name of MachineCatalog
-  $CatalogName = $Catalog | %{ $_.Name }
-  "Catalog: $CatalogName" | LogMe -display -progress
-
-  if ($ExcludedCatalogs -contains $CatalogName) {
-    "Excluded Catalog, skipping" | LogMe -display -progress
-  } else {
-    #CatalogAssignedCount
-    $CatalogAssignedCount = $Catalog | %{ $_.AssignedCount }
-    "Assigned: $CatalogAssignedCount" | LogMe -display -progress
-    $tests.AssignedToUser = "NEUTRAL", $CatalogAssignedCount
-  
-    #CatalogUnassignedCount
-    $CatalogUnAssignedCount = $Catalog | %{ $_.UnassignedCount }
-    "Unassigned: $CatalogUnAssignedCount" | LogMe -display -progress
-    $tests.NotToUserAssigned = "NEUTRAL", $CatalogUnAssignedCount
-  
-    # Assigned to DeliveryGroup
-    $CatalogUsedCountCount = $Catalog | %{ $_.UsedCount }
-    "Used: $CatalogUsedCountCount" | LogMe -display -progress
-    $tests.AssignedToDG = "NEUTRAL", $CatalogUsedCountCount
-
-    #MinimumFunctionalLevel
-	$MinimumFunctionalLevel = $Catalog | %{ $_.MinimumFunctionalLevel }
-	"MinimumFunctionalLevel: $MinimumFunctionalLevel" | LogMe -display -progress
-    $tests.MinimumFunctionalLevel = "NEUTRAL", $MinimumFunctionalLevel
-  
-     #ProvisioningType
-     $CatalogProvisioningType = $Catalog | %{ $_.ProvisioningType }
-     "ProvisioningType: $CatalogProvisioningType" | LogMe -display -progress
-     $tests.ProvisioningType = "NEUTRAL", $CatalogProvisioningType
-  
-     #AllocationType
-     $CatalogAllocationType = $Catalog | %{ $_.AllocationType }
-     "AllocationType: $CatalogAllocationType" | LogMe -display -progress
-     $tests.AllocationType = "NEUTRAL", $CatalogAllocationType
-  
-    "", ""
-    $CatalogResults.$CatalogName = $tests
-  }  
-  " --- " | LogMe -display -progress
-}
-
-#>
-
 ######################################################################################
 
 ####Checking the SF informaton
@@ -908,36 +812,6 @@ foreach ($Assigment in $Assigments) {
     "DesktopKind: $AssigmentDesktopsKind" | LogMe -display -progress
     $tests.DesktopKind = "NEUTRAL", $AssigmentDesktopsKind
 
-    <#
-	
-	#SessionSupport
-	$SessionSupport = $Assigment | %{ $_.SessionSupport }
-	"SessionSupport: $SessionSupport" | LogMe -display -progress
-    $tests.SessionSupport = "NEUTRAL", $SessionSupport
-	#>
-
-   <#
-	#ShutdownAfterUse
-	$ShutdownDesktopsAfterUse = $Assigment | %{ $_.ShutdownDesktopsAfterUse }
-	"ShutdownDesktopsAfterUse: $ShutdownDesktopsAfterUse" | LogMe -display -progress
-  
-
-	if ($SessionSupport -eq "MultiSession" -and $ShutdownDesktopsAfterUse -eq "$true" ) { 
-	$tests.ShutdownAfterUse = "ERROR", $ShutdownDesktopsAfterUse
-	}
-	else { 
-	 $tests.ShutdownAfterUse = "NEUTRAL", $ShutdownDesktopsAfterUse
-	}
-
-	#>
-   <#
-
-    #MinimumFunctionalLevel
-	$MinimumFunctionalLevel = $Assigment | %{ $_.MinimumFunctionalLevel }
-	"MinimumFunctionalLevel: $MinimumFunctionalLevel" | LogMe -display -progress
-    $tests.MinimumFunctionalLevel = "NEUTRAL", $MinimumFunctionalLevel
-	#>
-<#
 
 	if ($SessionSupport -eq "MultiSession" ) { 
 	
@@ -1436,12 +1310,6 @@ writeTableFooter $resultsHTM
 writeTableHeader $resultsHTM $CTXLicFirstheaderName $CTXLicHeaderNames $CTXLicHeaderWidths $CTXLicTableWidth
 $CTXLicResults | sort-object -property LicenseName | %{ writeData $CTXLicResults $resultsHTM $CTXLicHeaderNames }
 writeTableFooter $resultsHTM
-<#  
-# Write Table with the Catalogs
-writeTableHeader $resultsHTM $CatalogHeaderName $CatalogHeaderNames $CatalogWidths $CatalogTablewidth
-$CatalogResults | %{ writeData $CatalogResults $resultsHTM $CatalogHeaderNames}
-writeTableFooter $resultsHTM
- #> 
   
 # Write Table with the Assignments (Delivery Groups)
 writeTableHeader $resultsHTM $AssigmentFirstheaderName $vAssigmentHeaderNames $vAssigmentHeaderWidths $Assigmenttablewidth
@@ -1491,6 +1359,5 @@ $smtpClient.EnableSsl = $smtpEnableSSL
 
 $smtpClient.Send($emailMessage)
 
-#Send-MailMessage -From "nram@alhilalbank.ae" -To "naveenram.ext@adcb.com"  -Subject "Sending the Attachment from PowerShell" -Body "The body of email goes here." -Attachment "C:\Naveen\Citrix HealthCheck\CTXXDHealthCheck.htm" -SmtpServer mail.cloud9vin.com -UseSsl -Priority High
 
 #$emailMessage.Bcc 
