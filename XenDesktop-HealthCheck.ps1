@@ -1,6 +1,6 @@
 ﻿#==============================================================================================
 # Modified On: 03/2025
-# Created by:Naveen Jogga Ram
+# Modified:Naveen Jogga Ram
 # File name: XA-and-XD-HealthCheck.ps1
 #
 # Description: This script checks a Citrix XenDesktop and/or XenApp 7.x Farm
