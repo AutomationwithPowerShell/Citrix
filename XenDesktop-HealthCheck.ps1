@@ -1,5 +1,6 @@
 ﻿#==============================================================================================
 # Modified On: 03/2025
+# Reference/Author : https://blog.sachathomet.ch/2014/11/30/xendesktop-and-xenapp-7-x-healthcheck-oops-i-did-it-again/
 # Modified:Naveen Jogga Ram
 # File name: XA-and-XD-HealthCheck.ps1
 #
